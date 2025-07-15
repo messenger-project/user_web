@@ -20,6 +20,11 @@
 # production
 /build
 
+.idea/
+.idea/workspace.xml
+/.idea/*
+.idea/*
+
 # misc
 .DS_Store
 *.pem
