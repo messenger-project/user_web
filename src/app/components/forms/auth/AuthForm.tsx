@@ -6,7 +6,6 @@ import InputField from "@/app/components/core/InputField/InputField";
 import Button from "@/app/components/core/Button/Button";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import Link from "next/link";
 
 const schema = z.object({
     email: z
