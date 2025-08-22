@@ -83,7 +83,7 @@ export default function Chat() {
                         </div>
                     ))}
                 </div>
-                <div className="flex gap-2">
+                <div className="gap-2">
                     <input
                         type="text"
                         value={message}
