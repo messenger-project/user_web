@@ -1,11 +1,14 @@
 'use client'
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import AuthForm from "@/app/components/forms/auth/AuthForm";
 import RequestService from "@/services/RequestService";
 import Link from "next/link";
 
 const Register = () => {
+
+    const router = useRouter();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -14,6 +17,7 @@ const Register = () => {
         const requestService = new RequestService('/auth/register');
         await requestService.post(data);
         setIsSubmitting(false);
+        router.push('/login');
     }
 
     return (

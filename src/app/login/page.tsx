@@ -1,6 +1,7 @@
 'use client'
 
 import React, {useState} from "react";
+import { useRouter } from "next/navigation";
 import RequestService from "@/services/RequestService";
 import AuthForm from "@/app/components/forms/auth/AuthForm";
 import Link from "next/link";
@@ -8,6 +9,8 @@ import Cookies from "universal-cookie";
 
 
 const Login = () => {
+
+    const router = useRouter();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -25,6 +28,7 @@ const Login = () => {
         });
 
         setIsSubmitting(false);
+        router.push('/c/me');
     }
 
     return (

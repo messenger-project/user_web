@@ -10,10 +10,8 @@ export async function middleware(request: NextRequest) {
     const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
 
     if (!token) {
-        // اگه تو صفحه عمومی هست، بذار بره
         if (isPublicRoute) return NextResponse.next();
 
-        // مسیر محافظت‌شده بدون توکن → ریدایرکت به login
         return NextResponse.redirect(new URL('/login', request.url));
     }
 
@@ -22,17 +20,15 @@ export async function middleware(request: NextRequest) {
         await jwtVerify(token, secret);
 
         if (isPublicRoute) {
-            return NextResponse.redirect(new URL('/c/:path*', request.url));
+            return NextResponse.redirect(new URL('/c/me', request.url));
         }
 
         return NextResponse.next();
     } catch (err) {
         console.log('Invalid token:', err);
 
-        // اگه توکن نامعتبر بود ولی مسیر login هست → نذار لوپ شه
         if (isPublicRoute) return NextResponse.next();
 
-        // در غیر این صورت، redirect کن
         return NextResponse.redirect(new URL('/login', request.url));
     }
 }
