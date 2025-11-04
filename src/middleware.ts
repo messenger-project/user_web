@@ -1,40 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
 
-const PUBLIC_ROUTES = ['/login', '/register'];
+const PROTECTED_ROUTES = ['/checkout/shipping'];
 
-export async function middleware(request: NextRequest) {
-    const token = request.cookies.get('token')?.value;
-    const pathname = request.nextUrl.pathname;
+async function verifyToken(token: string) {
+    const res = await fetch(`${process.env.LARAVEL_URL}/api/v1/user`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
 
-    const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+    if (!res.ok) return false;
+    return true;
+}
 
-    if (!token) {
-        if (isPublicRoute) return NextResponse.next();
+export async function middleware(req: NextRequest) {
+    const token = req.cookies.get('token')?.value;
+    const pathname = req.nextUrl.pathname;
 
-        return NextResponse.redirect(new URL('/login', request.url));
+    const isProtected = PROTECTED_ROUTES.some(route => pathname.startsWith(route));
+
+    if (isProtected) {
+        if (!token) return NextResponse.redirect(new URL('/login', req.url));
+
+        const valid = await verifyToken(token);
+        if (!valid) return NextResponse.redirect(new URL('/login', req.url));
     }
 
-    try {
-        const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-        await jwtVerify(token, secret);
-
-        if (isPublicRoute) {
-            return NextResponse.redirect(new URL('/c/me', request.url));
-        }
-
-        return NextResponse.next();
-    } catch (err) {
-        console.log('Invalid token:', err);
-
-        if (isPublicRoute) return NextResponse.next();
-
-        return NextResponse.redirect(new URL('/login', request.url));
-    }
+    return NextResponse.next();
 }
 
 export const config = {
-    matcher: [
-        '/((?!_next/static|_next/image|favicon.ico|logo.svg|fonts|images).*)',
-    ],
+    matcher: ['/((?!_next/static|_next/image|favicon.ico|logo.svg|fonts|images).*)'],
 };
