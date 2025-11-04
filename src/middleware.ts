@@ -7,8 +7,7 @@ async function verifyToken(token: string) {
         headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!res.ok) return false;
-    return true;
+    return res.ok;
 }
 
 export async function middleware(req: NextRequest) {
