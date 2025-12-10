@@ -20,9 +20,8 @@ export default function DrawPage() {
     const [drawing, setDrawing] = useState(false);
     const lastPos = useRef<Point | null>(null);
 
-    // connect socket only on client
     useEffect(() => {
-        const socket = io("https://back.drmonk.ir");
+        const socket = io(process.env.NEXT_PUBLIC_BASE_URL);
         socketRef.current = socket;
 
         const handleDrawLine = (data: DrawLine) => {
@@ -92,14 +91,12 @@ export default function DrawPage() {
     };
 
     return (
-        <div style={{ textAlign: "center", padding: 20 }}>
-            <h1>Realtime Collaborative Drawing 🎨</h1>
-
+        <div style={{ textAlign: "center" }}>
             <canvas
                 ref={canvasRef}
-                width={800}
-                height={500}
-                style={{ border: "1px solid #ccc", cursor: "crosshair" }}
+                width={window.innerWidth}
+                height={window.innerHeight}
+                style={{ cursor: "crosshair" }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
