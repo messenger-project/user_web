@@ -43,7 +43,9 @@ class RequestService {
 
       const isFormData = payload instanceof FormData;
 
-      const response = await fetch(BASE_URL + this.endpoint, {
+      const url = BASE_URL + this.endpoint;
+
+      const response = await fetch(url, {
         method: METHOD_POST,
         headers: {
           ...this.getHeaders(),
