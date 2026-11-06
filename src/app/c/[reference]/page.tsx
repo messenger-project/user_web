@@ -1,9 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import RequestService from "@/services/RequestService";
 import Link from "next/link";
+
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
     user: string;
@@ -24,36 +27,82 @@ export default function Chat() {
         setContacts(result);
     };
 
-    useEffect(() => {
-        getContacts().catch((error) => console.log(error));
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-        const socketUrl = process.env.NEXT_PUBLIC_BASE_URL;
-        if (!socketUrl) {
-            console.error('Socket URL is not defined in ' + process.env.NEXT_PUBLIC_BASE_URL);
-            return;
-        }
+    // useEffect(() => {
+    //     getContacts().catch((error) => console.log(error));
 
-        socket = io(socketUrl);
+    //     const socketUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    //     if (!socketUrl) {
+    //         console.error('Socket URL is not defined in ' + process.env.NEXT_PUBLIC_BASE_URL);
+    //         return;
+    //     }
 
-        socket.on('connect', () => {
-            console.log('Connected:', socket?.id);
-        });
+    //     socket = io(socketUrl);
 
-        socket.on('message', (msg: Message) => {
-            setMessages((prev) => [...prev, msg]);
-        });
+    //     socket.on('connect', () => {
+    //         console.log('Connected:', socket?.id);
+    //     });
 
-        return () => {
-            socket?.disconnect();
+    //     socket.on('message', (msg: Message) => {
+    //         setMessages((prev) => [...prev, msg]);
+    //     });
+
+    //     return () => {
+    //         socket?.disconnect();
+    //     };
+    // }, []);
+
+    // const sendMessage = () => {
+    //     if (!message.trim()) return;
+    //     socket?.emit('message', { user: 'کاربر', text: message });
+    //     setMessage('');
+    // };
+
+        const sendMessage = async () => {
+            const text = message.trim();
+
+            if (!text) return;
+
+            console.log('1. Sending message:', text);
+
+            setMessages((prev) => [
+                ...prev,
+                { user: 'You', text },
+            ]);
+
+            setMessage('');
+
+            if (textareaRef.current) {
+                textareaRef.current.style.height = 'auto';
+            }
+
+            const requestService = new RequestService('/v1/chat/completions');
+
+            console.log('2. Request started');
+
+            const result = await requestService.post({
+                model: 'qwen/qwen3-8b',
+                messages: [
+                    {
+                        role: 'user',
+                        content: text,
+                    },
+                ],
+                stream: false,
+            });
+
+            console.log('3. Response received:', result);
+
+            const reply = result?.choices?.[0]?.message?.content;
+
+            if (reply) {
+                setMessages((prev) => [
+                    ...prev,
+                    { user: 'AI', text: reply },
+                ]);
+            }
         };
-    }, []);
-
-    const sendMessage = () => {
-        if (!message.trim()) return;
-        socket?.emit('message', { user: 'کاربر', text: message });
-        setMessage('');
-    };
-
     return (
         <div className="h-screen w-screen grid grid-cols-12 md:grid-cols-12 gap-2 p-2 bg-gray-900 text-gray-50">
             {/* Contacts Drawer for mobile */}
@@ -91,33 +140,62 @@ export default function Chat() {
             </div>
 
             {/* Main Chat Area */}
-            <div className="col-span-12 md:col-span-9 grid grid-rows-12 gap-2">
-                <div className="row-span-11 overflow-y-scroll p-2 bg-gray-800 rounded space-y-2">
-                    {messages.map((m, i) => (
-                        <div
-                            key={i}
-                            className="w-fit max-w-xs p-2 bg-gray-600 rounded-b-md rounded-r-md shadow-md"
-                        >
-                            <strong>{m.user}:</strong> {m.text}
+            <div className="col-span-12 md:col-span-9 flex flex-col min-h-0 gap-2">
+                <div className="flex-1 min-h-0 overflow-y-auto p-2 bg-gray-800 rounded space-y-2">
+                {messages.map((m, i) => (
+                    <div
+                        key={i}
+                        className={`w-fit max-w-[85%] min-w-0 p-3 rounded-lg shadow-md ${
+                            m.user === 'You'
+                                ? 'ml-auto bg-blue-600'
+                                : 'mr-auto bg-gray-700'
+                        }`}
+                    >
+                        <div className="mb-2 text-xs font-semibold opacity-70">
+                            {m.user}
                         </div>
-                    ))}
+
+                        {m.user === 'AI' ? (
+                            <div className="prose prose-invert prose-sm max-w-none break-words">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {m.text}
+                                </ReactMarkdown>
+                            </div>
+                        ) : (
+                            <p className="whitespace-pre-wrap break-words">
+                                {m.text}
+                            </p>
+                        )}
+                    </div>
+                ))}
                 </div>
-                <div className="row-span-1 flex items-center space-x-2 p-2 bg-gray-800 rounded">
+                <div className="shrink-0 flex items-end gap-2 p-2 bg-gray-800 rounded">
                     <button
                         onClick={() => setIsDrawerOpen(true)}
                         className="md:hidden bg-gray-600 px-4 py-2 rounded hover:bg-gray-500"
                     >
                         ☰
                     </button>
-                    <input
-                        type="text"
+                    <textarea
+                        ref={textareaRef}
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') sendMessage();
+                        onChange={(e) => {
+                            setMessage(e.target.value);
+
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
                         }}
-                        placeholder="Write..."
-                        className="flex-grow p-2 bg-gray-700 rounded focus:outline-none"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                sendMessage();
+                            }
+                        }}
+                        rows={1}
+                        placeholder="Write a message..."
+                        className="flex-1 min-w-0 resize-none overflow-y-auto
+                                max-h-40 rounded-lg bg-gray-700
+                                px-3 py-2 text-gray-50 outline-none"
                     />
                     <button
                         onClick={sendMessage}
