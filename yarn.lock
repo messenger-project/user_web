@@ -3245,6 +3245,11 @@ lru-cache@^10.2.0, lru-cache@^10.4.3:
   resolved "https://registry.npmjs.org/lru-cache/-/lru-cache-10.4.3.tgz"
   integrity sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==
 
+lucide-react@^1.70.0:
+  version "1.70.0"
+  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-1.70.0.tgz#5f10a72e87099f6cc37293993c2431388bd76258"
+  integrity sha512-gCTPPN1MlQUBtUgdsUv+0CAUj+X8hifRUiRBw4E5v7lvDIOIpx0EZezdGQMSimS8pKA6esvullJub4GYr0mCHA==
+
 magic-string@^0.30.17:
   version "0.30.17"
   resolved "https://registry.npmjs.org/magic-string/-/magic-string-0.30.17.tgz"
