@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useState, useRef } from 'react';
 import RequestService from "@/services/RequestService";
 import Link from "next/link";
 
@@ -13,51 +12,13 @@ interface Message {
     text: string;
 }
 
-let socket: Socket | null = null;
-
 export default function Chat() {
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
-    const [contacts, setContacts] = useState<{ id: string; email: string }[]>([]);
+    const [contacts] = useState<{ id: string; email: string }[]>([]);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-    const getContacts = async () => {
-        const requestService = new RequestService('/user/contacts');
-        const result = await requestService.get();
-        setContacts(result);
-    };
-
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    // useEffect(() => {
-    //     getContacts().catch((error) => console.log(error));
-
-    //     const socketUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    //     if (!socketUrl) {
-    //         console.error('Socket URL is not defined in ' + process.env.NEXT_PUBLIC_BASE_URL);
-    //         return;
-    //     }
-
-    //     socket = io(socketUrl);
-
-    //     socket.on('connect', () => {
-    //         console.log('Connected:', socket?.id);
-    //     });
-
-    //     socket.on('message', (msg: Message) => {
-    //         setMessages((prev) => [...prev, msg]);
-    //     });
-
-    //     return () => {
-    //         socket?.disconnect();
-    //     };
-    // }, []);
-
-    // const sendMessage = () => {
-    //     if (!message.trim()) return;
-    //     socket?.emit('message', { user: 'کاربر', text: message });
-    //     setMessage('');
-    // };
 
         const sendMessage = async () => {
             const text = message.trim();

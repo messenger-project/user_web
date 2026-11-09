@@ -6,8 +6,8 @@
     "dev": "cross-env PORT=4040 next dev --turbopack",
     "build": "next build",
     "test": "jest",
-    "start": "PORT=4040 next start",
-    "lint": "next lint"
+    "start": "cross-env PORT=4040 next start",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.4",

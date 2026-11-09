@@ -7,7 +7,6 @@ const METHOD_POST = 'POST';
 const METHOD_PATCH = 'PATCH';
 const METHOD_DELETE = 'DELETE';
 const APPLICATION_JSON = 'application/json';
-const APPLICATION_FORM_DATA = 'application/form-data';
 
 interface ApiResponse {
   message: string;
