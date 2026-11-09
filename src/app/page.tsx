@@ -2,10 +2,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
 export default function HomePage() {
-  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,7 +19,6 @@ export default function HomePage() {
     try {
       // Connect your authentication API here.
       // Redirect only after successful authentication.
-      // router.replace("/c/me");
 
       setError("Authentication is not configured yet.");
     } catch {
