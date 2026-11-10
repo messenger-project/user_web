@@ -8,7 +8,11 @@ const CvPreview = dynamic(
     () => import("@/components/cv/CvPreview"),
     {
         ssr: false,
-        loading: () => <p>Loading CV preview...</p>,
+        loading: () => (
+            <div className="flex min-h-64 items-center justify-center text-sm text-[#54595F]">
+                Loading CV preview...
+            </div>
+        ),
     }
 );
 
@@ -32,17 +36,31 @@ export default function CvPreviewPage() {
     }, []);
 
     return (
-        <main className="min-h-screen bg-[#F5F7FA] p-6">
-            <div className="mx-auto max-w-5xl">
-                <h1 className="mb-6 text-2xl font-semibold">
-                    CV Preview
-                </h1>
+        <main className="min-h-dvh w-full min-w-0 overflow-x-hidden bg-[#F5F7FA] px-3 py-4 text-[#02394F] sm:px-6 sm:py-6 lg:px-8">
+            <div className="mx-auto w-full min-w-0 max-w-6xl">
+                <header className="mb-6 hidden lg:block">
+                    <h1 className="text-2xl font-semibold">
+                        CV Preview
+                    </h1>
+                    <p className="mt-1 text-sm text-[#54595F]">
+                        Choose a template, preview your CV, and download the PDF.
+                    </p>
+                </header>
 
                 {error && (
-                    <p className="text-red-600">{error}</p>
+                    <div
+                        role="alert"
+                        className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+                    >
+                        {error}
+                    </div>
                 )}
 
-                {cv && <CvPreview cv={cv} />}
+                {cv && (
+                    <section className="w-full min-w-0">
+                        <CvPreview cv={cv} />
+                    </section>
+                )}
             </div>
         </main>
     );
