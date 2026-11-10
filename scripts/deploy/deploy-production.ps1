@@ -30,6 +30,8 @@ if (-not (Test-Path $release)) {
 
     Push-Location $workspace
     try {
+        $env:NODE_ENV = "development"
+
         yarn.cmd install --frozen-lockfile --production=false
         if ($LASTEXITCODE -ne 0) { throw "Install failed." }
 
