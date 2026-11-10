@@ -2,7 +2,7 @@
 
 import React, { useId } from 'react';
 import clsx from 'clsx';
-import Input from "@/app/components/core/Input/Input";
+import Input from "@/components/core/Input/Input";
 
 interface InputFiledProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;

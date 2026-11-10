@@ -3,17 +3,19 @@
 import { useState, useRef, useEffect } from "react";
 import FileService from "@/services/FileService";
 import RequestService from "@/services/RequestService";
+import CvService from "@/services/CvService";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  Menu,
-  X,
-  Send,
-  Paperclip,
-  FileText,
-  MessageCircle,
-  Loader2,
+    Menu,
+    X,
+    Send,
+    Paperclip,
+    FileText,
+    FileDown,
+    MessageCircle,
+    Loader2,
 } from "lucide-react";
 
 interface Message {
@@ -131,6 +133,69 @@ export default function Chat() {
       }
   };
 
+  const generateCvPdf = async () => {
+      const text = message.trim();
+      const file = selectedFile;
+
+      if ((!text && !file) || isSending) return;
+
+      const previewTab = window.open("", "_blank");
+
+      if (previewTab) {
+          previewTab.document.title = "Generating CV...";
+          previewTab.document.body.textContent =
+              "Generating your CV. Please wait...";
+      }
+
+      setIsSending(true);
+
+      try {
+          let extractedText = "";
+
+          if (file) {
+              const fileService = new FileService();
+              const extractedDocument = await fileService.extract(file);
+              extractedText = extractedDocument.text;
+          }
+
+          const cvService = new CvService();
+
+          const cv = await cvService.generate(
+              text || "Create a professional CV using the attached document.",
+              extractedText
+          );
+
+          const cvJson = JSON.stringify(cv);
+
+          sessionStorage.setItem("tailoredCv", cvJson);
+
+          if (previewTab && !previewTab.closed) {
+              previewTab.sessionStorage.setItem("tailoredCv", cvJson);
+              previewTab.location.replace("/cv/preview");
+          }
+
+      } catch (error) {
+          console.error("Failed to generate CV:", error);
+
+          if (previewTab && !previewTab.closed) {
+              previewTab.close();
+          }
+
+          const errorMessage =
+              error instanceof Error ? error.message : "Unknown error.";
+
+          setMessages((prev) => [
+              ...prev,
+              {
+                  user: "AI",
+                  text: `Unable to generate CV: ${errorMessage}`,
+              },
+          ]);
+      } finally {
+          setIsSending(false);
+      }
+  };
+
   const handleFileChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -144,6 +209,20 @@ export default function Chat() {
 
   const removeFile = () => {
     setSelectedFile(null);
+  };
+
+  const clearInput = () => {
+    setMessage("");
+    setSelectedFile(null);
+
+    if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+        textareaRef.current.focus();
+    }
+
+    if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -394,6 +473,26 @@ export default function Chat() {
                 <Paperclip size={21} />
               </button>
 
+              {/* Clear input and attachment */}
+              <button
+                  type="button"
+                  onClick={clearInput}
+                  disabled={!message && !selectedFile}
+                  title="Clear message and attachment"
+                  aria-label="Clear message and attachment"
+                  className="
+                      flex h-10 w-10 shrink-0 items-center justify-center
+                      rounded-xl text-[#81919C]
+                      transition-all duration-200
+                      hover:bg-red-50 hover:text-red-500
+                      active:scale-95
+                      disabled:cursor-not-allowed disabled:opacity-30
+                      disabled:hover:bg-transparent
+                  "
+              >
+                  <X size={19} strokeWidth={2} />
+              </button>
+
               {/* Textarea */}
               <textarea
                 ref={textareaRef}
@@ -421,17 +520,64 @@ export default function Chat() {
                 className="max-h-40 min-h-10 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent px-2 py-2.5 text-sm leading-5 text-[#02394F] outline-none placeholder:text-[#93A3AE]"
               />
 
-              {/* Send */}
+              {/* Send message */}
               <button
-                type="button"
-                onClick={() => void sendMessage()}
-                disabled={!message.trim() || isSending}
-                title="Send message"
-                aria-label="Send message"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#008EED] text-white transition hover:bg-[#007ACD] disabled:cursor-not-allowed disabled:opacity-40"
+                  type="button"
+                  onClick={() => void sendMessage()}
+                  disabled={!message.trim() || isSending}
+                  title="Send message"
+                  aria-label="Send message"
+                  className="
+                      flex h-10 w-10 shrink-0 items-center justify-center
+                      rounded-xl bg-[#008EED] text-white
+                      shadow-sm transition-all duration-200
+                      hover:bg-[#05A7F7] hover:shadow-md
+                      active:scale-95
+                      focus-visible:outline-none focus-visible:ring-2
+                      focus-visible:ring-[#008EED] focus-visible:ring-offset-2
+                      disabled:cursor-not-allowed disabled:opacity-40
+                      disabled:hover:shadow-none
+                  "
               >
-                <Send size={19} />
+                  {isSending ? (
+                      <Loader2 size={19} className="animate-spin" />
+                  ) : (
+                      <Send size={19} strokeWidth={2} />
+                  )}
               </button>
+
+              {/* Generate CV PDF */}
+              <button
+                  type="button"
+                  onClick={() => void generateCvPdf()}
+                  disabled={(!message.trim() && !selectedFile) || isSending}
+                  title="Generate CV PDF"
+                  aria-label="Generate CV PDF"
+                  className="
+                      flex h-10 shrink-0 items-center justify-center gap-2
+                      rounded-xl bg-[#02394F] px-3 text-white
+                      shadow-sm transition-all duration-200
+                      hover:bg-[#0C4DA2] hover:shadow-md
+                      active:scale-95
+                      focus-visible:outline-none focus-visible:ring-2
+                      focus-visible:ring-[#008EED] focus-visible:ring-offset-2
+                      disabled:cursor-not-allowed disabled:opacity-40
+                      disabled:hover:shadow-none
+                      sm:px-4
+                  "
+              >
+                  {isSending ? (
+                      <Loader2 size={18} className="shrink-0 animate-spin" />
+                  ) : (
+                      <FileDown size={18} className="shrink-0" strokeWidth={2} />
+                  )}
+
+                  <span className="whitespace-nowrap text-xs font-semibold sm:text-sm">
+                      <span className="sm:hidden">CV PDF</span>
+                      <span className="hidden sm:inline">Generate CV PDF</span>
+                  </span>
+              </button>
+
             </div>
           </div>
         </div>

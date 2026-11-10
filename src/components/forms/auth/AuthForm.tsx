@@ -2,8 +2,8 @@
 
 import React from "react";
 import { z } from 'zod';
-import InputField from "@/app/components/core/InputField/InputField";
-import Button from "@/app/components/core/Button/Button";
+import InputField from "@/components/core/InputField/InputField";
+import Button from "@/components/core/Button/Button";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 
