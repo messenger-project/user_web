@@ -25,16 +25,20 @@ if (-not (Test-Path $release)) {
 
     Copy-Item "$project\.env.local" "$workspace\.env.local"
 
+    $previousNodeEnv = $env:NODE_ENV
+
     Push-Location $workspace
     try {
         yarn.cmd install --frozen-lockfile
         if ($LASTEXITCODE -ne 0) { throw "Install failed." }
 
         $env:NODE_ENV = "production"
+
         yarn.cmd build
         if ($LASTEXITCODE -ne 0) { throw "Build failed." }
     }
     finally {
+        $env:NODE_ENV = $previousNodeEnv
         Pop-Location
     }
 
@@ -59,31 +63,55 @@ if (-not (Test-Path "$release\server.js")) {
 }
 
 $current = (nssm get $service AppDirectory).Trim()
+if ($LASTEXITCODE -ne 0) { throw "Unable to read current service directory." }
+
+$currentParameters = (nssm get $service AppParameters).Trim()
+if ($LASTEXITCODE -ne 0) { throw "Unable to read current service parameters." }
 
 if ($current -eq $release) {
     Write-Host "Production is already running this release."
     exit 0
 }
 
-nssm set $service AppDirectory $release
-if ($LASTEXITCODE -ne 0) { throw "NSSM directory update failed." }
-
-nssm set $service AppParameters "$release\server.js"
-if ($LASTEXITCODE -ne 0) { throw "NSSM parameters update failed." }
-
-nssm restart $service
-if ($LASTEXITCODE -ne 0) { throw "Service restart failed." }
-
-Start-Sleep -Seconds 3
-
-$response = Invoke-WebRequest `
-    -Uri "http://127.0.0.1:4041/c/me" `
-    -Method Head `
-    -TimeoutSec 10 `
-    -UseBasicParsing
-
-if ($response.StatusCode -ne 200) {
-    throw "Production health check failed."
+if (-not (Test-Path (Join-Path $current "server.js"))) {
+    throw "Previous release is not available for rollback."
 }
 
-Write-Host "Production deployment completed: $commit"
+try {
+    nssm set $service AppDirectory $release
+    if ($LASTEXITCODE -ne 0) { throw "NSSM directory update failed." }
+
+    nssm set $service AppParameters "$release\server.js"
+    if ($LASTEXITCODE -ne 0) { throw "NSSM parameters update failed." }
+
+    nssm restart $service
+    if ($LASTEXITCODE -ne 0) { throw "Service restart failed." }
+
+    Start-Sleep -Seconds 3
+
+    $response = Invoke-WebRequest `
+        -Uri "http://127.0.0.1:4041/c/me" `
+        -Method Head `
+        -TimeoutSec 10 `
+        -UseBasicParsing
+
+    if ($response.StatusCode -ne 200) {
+        throw "Production health check failed."
+    }
+
+    Write-Host "Production deployment completed: $commit"
+}
+catch {
+    Write-Warning "Deployment failed. Attempting rollback."
+
+    nssm set $service AppDirectory $current
+    if ($LASTEXITCODE -ne 0) { throw "Rollback directory update failed." }
+
+    nssm set $service AppParameters $currentParameters
+    if ($LASTEXITCODE -ne 0) { throw "Rollback parameters update failed." }
+
+    nssm restart $service
+    if ($LASTEXITCODE -ne 0) { throw "Rollback restart failed." }
+
+    throw "Production deployment failed. Rollback attempted."
+}
