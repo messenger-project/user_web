@@ -17,7 +17,8 @@ $release = Join-Path $root "releases\$commit"
 
 if (-not (Test-Path $release)) {
     if (Test-Path $workspace) {
-        throw "Build directory already exists: $workspace"
+        Write-Host "Removing previous build workspace: $workspace"
+        Remove-Item $workspace -Recurse -Force -ErrorAction Stop
     }
 
     git clone --local --no-hardlinks $project $workspace
@@ -29,7 +30,7 @@ if (-not (Test-Path $release)) {
 
     Push-Location $workspace
     try {
-        yarn.cmd install --frozen-lockfile
+        yarn.cmd install --frozen-lockfile --production=false
         if ($LASTEXITCODE -ne 0) { throw "Install failed." }
 
         $env:NODE_ENV = "production"
