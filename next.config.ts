@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
     output: "standalone",
     distDir: isDevelopment ? ".next-dev" : ".next",
 
+    outputFileTracingIncludes: {
+        "/api/documents/extract": [
+            "./node_modules/@napi-rs/canvas/**/*",
+            "./node_modules/@napi-rs/canvas-*/**/*",
+            "./node_modules/pdfjs-dist/node_modules/@napi-rs/canvas/**/*",
+            "./node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-*/**/*",
+        ],
+    },
+
     async rewrites() {
         return [
             {
