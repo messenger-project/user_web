@@ -422,47 +422,50 @@ export default function Chat() {
         </div>
 
         {/* Message composer */}
-        <div className="shrink-0 border-t border-[#DFE7EC] bg-white px-3 py-3 sm:px-6 sm:py-4">
-          <div className="mx-auto max-w-[900px]">
-            {/* Selected file */}
-            {selectedFile && (
-              <div className="mb-3 flex max-w-sm items-center gap-3 rounded-xl border border-[#DCE7EF] bg-[#F3F8FC] px-3 py-2">
-                <FileText
-                  size={21}
-                  className="shrink-0 text-[#008EED]"
-                />
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-[#02394F]">
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-xs text-[#81919C]">
-                    {(selectedFile.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
-
-                <button
-                  onClick={removeFile}
-                  aria-label="Remove file"
-                  className="rounded-lg p-1 text-[#81919C] hover:bg-[#E2EDF4] hover:text-[#02394F]"
-                >
-                  <X size={17} />
-                </button>
+      <div className="shrink-0 border-t border-[#DFE7EC] bg-white px-3 py-3 sm:px-6 sm:py-4">
+        <div className="mx-auto w-full max-w-[900px]">
+          {selectedFile && (
+            <div className="mb-3 flex max-w-sm items-center gap-3 rounded-xl border border-[#DCE7EF] bg-[#F3F8FC] px-3 py-2">
+              <FileText size={21} className="shrink-0 text-[#008EED]" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-[#02394F]">{selectedFile.name}</p>
+                <p className="text-xs text-[#81919C]">{(selectedFile.size / 1024).toFixed(1)} KB</p>
               </div>
-            )}
+              <button type="button" onClick={removeFile} aria-label="Remove file" className="rounded-lg p-1 text-[#81919C] hover:bg-[#E2EDF4] hover:text-[#02394F]">
+                <X size={17} />
+              </button>
+            </div>
+          )}
 
-            <div className="flex items-end gap-2 rounded-2xl border border-[#DCE5EC] bg-[#F7F9FB] p-2 transition-colors focus-within:border-[#008EED] focus-within:ring-2 focus-within:ring-[#008EED]/10">
-              {/* File input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                onChange={handleFileChange}
-                // accept=".pdf,.txt,.doc,.docx,.csv,.xlsx,.png,.jpg,.jpeg"
-                accept=".pdf,.txt"
-              />
+          <div className="flex w-full min-w-0 flex-col gap-2 rounded-2xl border border-[#DCE5EC] bg-[#F7F9FB] p-2 transition-colors focus-within:border-[#008EED] focus-within:ring-2 focus-within:ring-[#008EED]/10">
+            <textarea
+              ref={textareaRef}
+              value={message}
+              onChange={(event) => {
+                setMessage(event.target.value);
+                event.target.style.height = "auto";
+                event.target.style.height = `${Math.min(event.target.scrollHeight, 160)}px`;
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  void sendMessage();
+                }
+              }}
+              rows={1}
+              placeholder="Write a message..."
+              className="block max-h-40 min-h-12 w-full min-w-0 resize-none overflow-y-auto bg-transparent px-3 py-3 text-sm leading-5 text-[#02394F] outline-none placeholder:text-[#93A3AE]"
+            />
 
-              {/* Attach file */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleFileChange}
+              accept=".pdf,.txt"
+            />
+
+            <div className="flex w-full min-w-0 items-center gap-1.5 sm:gap-2">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -472,116 +475,45 @@ export default function Chat() {
               >
                 <Paperclip size={21} />
               </button>
-
-              {/* Clear input and attachment */}
               <button
-                  type="button"
-                  onClick={clearInput}
-                  disabled={!message && !selectedFile}
-                  title="Clear message and attachment"
-                  aria-label="Clear message and attachment"
-                  className="
-                      flex h-10 w-10 shrink-0 items-center justify-center
-                      rounded-xl text-[#81919C]
-                      transition-all duration-200
-                      hover:bg-red-50 hover:text-red-500
-                      active:scale-95
-                      disabled:cursor-not-allowed disabled:opacity-30
-                      disabled:hover:bg-transparent
-                  "
+                type="button"
+                onClick={clearInput}
+                disabled={!message && !selectedFile}
+                title="Clear message and attachment"
+                aria-label="Clear message and attachment"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#81919C] transition-all duration-200 hover:bg-red-50 hover:text-red-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
               >
-                  <X size={19} strokeWidth={2} />
+                <X size={19} strokeWidth={2} />
               </button>
 
-              {/* Textarea */}
-              <textarea
-                ref={textareaRef}
-                value={message}
-                onChange={(event) => {
-                  setMessage(event.target.value);
-                  event.target.style.height = "auto";
-                  event.target.style.height = `${Math.min(
-                    event.target.scrollHeight,
-                    160
-                  )}px`;
-                }}
-                onKeyDown={(event) => {
-                  if (
-                    event.key === "Enter" &&
-                    !event.shiftKey &&
-                    !event.nativeEvent.isComposing
-                  ) {
-                    event.preventDefault();
-                    void sendMessage();
-                  }
-                }}
-                rows={1}
-                placeholder="Write a message..."
-                className="max-h-40 min-h-10 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent px-2 py-2.5 text-sm leading-5 text-[#02394F] outline-none placeholder:text-[#93A3AE]"
-              />
+              <div className="min-w-0 flex-1" />
 
-              {/* Send message */}
               <button
-                  type="button"
-                  onClick={() => void sendMessage()}
-                  disabled={!message.trim() || isSending}
-                  title="Send message"
-                  aria-label="Send message"
-                  className="
-                      flex h-10 w-10 shrink-0 items-center justify-center
-                      rounded-xl bg-[#008EED] text-white
-                      shadow-sm transition-all duration-200
-                      hover:bg-[#05A7F7] hover:shadow-md
-                      active:scale-95
-                      focus-visible:outline-none focus-visible:ring-2
-                      focus-visible:ring-[#008EED] focus-visible:ring-offset-2
-                      disabled:cursor-not-allowed disabled:opacity-40
-                      disabled:hover:shadow-none
-                  "
+                type="button"
+                onClick={() => void generateCvPdf()}
+                disabled={(!message.trim() && !selectedFile) || isSending}
+                title="Generate CV PDF"
+                aria-label="Generate CV PDF"
+                className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#02394F] px-2.5 text-white shadow-sm transition-all duration-200 hover:bg-[#0C4DA2] hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008EED] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-none sm:px-4"
               >
-                  {isSending ? (
-                      <Loader2 size={19} className="animate-spin" />
-                  ) : (
-                      <Send size={19} strokeWidth={2} />
-                  )}
+                {isSending ? <Loader2 size={18} className="shrink-0 animate-spin" /> : <FileDown size={18} className="shrink-0" strokeWidth={2} />}
+                <span className="whitespace-nowrap text-xs font-semibold sm:text-sm">CV PDF</span>
               </button>
-
-              {/* Generate CV PDF */}
               <button
-                  type="button"
-                  onClick={() => void generateCvPdf()}
-                  disabled={(!message.trim() && !selectedFile) || isSending}
-                  title="Generate CV PDF"
-                  aria-label="Generate CV PDF"
-                  className="
-                      flex h-10 shrink-0 items-center justify-center gap-2
-                      rounded-xl bg-[#02394F] px-3 text-white
-                      shadow-sm transition-all duration-200
-                      hover:bg-[#0C4DA2] hover:shadow-md
-                      active:scale-95
-                      focus-visible:outline-none focus-visible:ring-2
-                      focus-visible:ring-[#008EED] focus-visible:ring-offset-2
-                      disabled:cursor-not-allowed disabled:opacity-40
-                      disabled:hover:shadow-none
-                      sm:px-4
-                  "
+                type="button"
+                onClick={() => void sendMessage()}
+                disabled={!message.trim() || isSending}
+                title="Send message"
+                aria-label="Send message"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#008EED] text-white shadow-sm transition-all duration-200 hover:bg-[#05A7F7] hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#008EED] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-none"
               >
-                  {isSending ? (
-                      <Loader2 size={18} className="shrink-0 animate-spin" />
-                  ) : (
-                      <FileDown size={18} className="shrink-0" strokeWidth={2} />
-                  )}
-
-                  <span className="whitespace-nowrap text-xs font-semibold sm:text-sm">
-                      <span className="sm:hidden">CV PDF</span>
-                      <span className="hidden sm:inline">Generate CV PDF</span>
-                  </span>
+                {isSending ? <Loader2 size={19} className="animate-spin" /> : <Send size={19} strokeWidth={2} />}
               </button>
-
             </div>
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
